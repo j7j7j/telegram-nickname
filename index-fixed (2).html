@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d18">
+  <meta name="description" content="Генератор Telegram username и открытие профилей по ссылке t.me.">
+  <title>Telegram Username Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(18,25,42,.84); --line: rgba(150,175,220,.15);
+      --text: #f3f6ff; --muted: #94a2bd; --blue: #36a9f5;
+      --blue2: #167bd0; --cyan: #69e0ef; --green: #48d6a0;
+      --red: #ff7185; --yellow: #ffc96b; --radius: 22px;
+      --shadow: 0 24px 80px rgba(0,0,0,.38);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      background: radial-gradient(900px 500px at 8% -10%,rgba(34,127,219,.20),transparent 60%),
+        radial-gradient(700px 500px at 100% 10%,rgba(75,85,220,.16),transparent 60%),
+        linear-gradient(145deg,#080c16,#0b1120 55%,#080c16);
+      font-family: Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      padding: 28px 18px 50px;
+    }
+    button,input,select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1120px,100%); margin: 0 auto; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-.03em; }
+    .brand-icon { width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#48c5ff,#2476e8);box-shadow:0 8px 28px rgba(39,145,239,.28);font-size:21px; }
+    .brand small { display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-top:2px; }
+    .local-pill { color:#b5c5df;border:1px solid var(--line);background:rgba(17,26,45,.62);padding:9px 12px;border-radius:999px;font-size:12px; }
+    .hero { text-align:center;margin:42px auto 30px;max-width:720px; }
+    .eyebrow { color:var(--cyan);font-size:12px;letter-spacing:.18em;font-weight:800;text-transform:uppercase; }
+    h1 { font-size:clamp(34px,6vw,58px);line-height:1.03;letter-spacing:-.055em;margin:14px 0; }
+    .gradient { background:linear-gradient(90deg,#fff,#8edbff 55%,#8d9bff);-webkit-background-clip:text;background-clip:text;color:transparent; }
+    .hero p { color:var(--muted);line-height:1.7;font-size:15px;margin:0 auto;max-width:590px; }
+    .layout { display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.8fr);gap:18px;align-items:start; }
+    .panel { background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(18px); }
+    .main-panel { padding:clamp(20px,4vw,34px); }
+    .side-panel { padding:22px; }
+    .section-head { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px; }
+    h2 { font-size:17px;margin:0;letter-spacing:-.02em; }
+    .sub { color:var(--muted);font-size:12px; }
+    .field-label { display:flex;justify-content:space-between;color:#c5d0e4;font-size:12px;font-weight:700;margin:0 0 9px; }
+    .username-wrap { display:flex;align-items:center;background:#090f1d;border:1px solid rgba(111,165,230,.25);border-radius:16px;padding:5px;transition:.2s; }
+    .username-wrap:focus-within { border-color:var(--blue);box-shadow:0 0 0 4px rgba(54,169,245,.10); }
+    .at { padding:0 10px 0 14px;color:#7f94b7;font-size:22px;font-weight:700; }
+    #username { min-width:0;flex:1;background:transparent;border:0;outline:0;color:white;padding:14px 4px;font-size:clamp(17px,3vw,22px);font-weight:750;letter-spacing:.015em; }
+    .icon-btn { border:1px solid var(--line);color:#c6d5ec;background:#17233a;border-radius:11px;width:42px;height:42px;display:grid;place-items:center;transition:.18s; }
+    .icon-btn:hover { background:#203453;transform:translateY(-1px); }
+    .actions { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px; }
+    .btn { border:0;border-radius:13px;padding:14px 16px;font-weight:800;transition:transform .18s,filter .18s; }
+    .btn:hover { transform:translateY(-2px);filter:brightness(1.08); }
+    .btn:active { transform:translateY(0); }
+    .primary { color:white;background:linear-gradient(120deg,var(--blue),var(--blue2));box-shadow:0 9px 24px rgba(25,133,220,.22); }
+    .secondary { color:#d8e6fb;background:#1b2942;border:1px solid var(--line); }
+    .check-btn { width:100%;margin-top:10px;background:linear-gradient(120deg,#263a5e,#1b2b47);color:#dceaff;border:1px solid rgba(102,165,230,.2); }
+    .result-box { margin-top:20px;padding:16px;border:1px solid var(--line);background:rgba(7,13,25,.55);border-radius:16px;min-height:76px; }
+    .result-title { display:flex;align-items:center;gap:9px;font-weight:750;font-size:13px; }
+    .dot { width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 12px currentColor; }
+    .result-detail { color:var(--muted);font-size:12px;line-height:1.55;margin:8px 0 0 17px; }
+    .result-link { color:#7bd0ff;display:inline-block;margin:9px 0 0 17px;font-size:12px;overflow-wrap:anywhere;text-decoration:none; }
+    .result-link:hover { text-decoration:underline; }
+    .settings-grid { display:grid;grid-template-columns:1fr 1fr;gap:13px; }
+    .control label { display:block;color:#b9c7df;font-size:12px;font-weight:700;margin-bottom:8px; }
+    select,.text-control { width:100%;border:1px solid var(--line);background:#0d1526;color:#eaf1ff;border-radius:11px;padding:11px 12px;outline:0; }
+    select:focus,input:focus { border-color:var(--blue); }
+    .checkline { display:flex;align-items:center;gap:9px;color:#b9c7df;font-size:12px;margin-top:14px; }
+    input[type=checkbox] { accent-color:var(--blue);width:15px;height:15px; }
+    .side-title { display:flex;justify-content:space-between;align-items:center;margin-bottom:15px; }
+    .counter { color:var(--cyan);font-size:12px;font-weight:800; }
+    .history { display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding-right:3px; }
+    .history-empty { color:var(--muted);font-size:12px;line-height:1.6;padding:16px 2px; }
+    .history-item { display:flex;align-items:center;gap:9px;background:rgba(8,14,26,.62);border:1px solid var(--line);padding:10px;border-radius:12px;min-width:0; }
+    .history-name { flex:1;min-width:0;font-size:13px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .history-tag { font-size:10px;color:#8fa5c9; }
+    .mini { border:1px solid var(--line);background:#18253c;color:#d8e8ff;border-radius:8px;padding:6px 8px;font-size:11px; }
+    .history-actions,.side-actions { display:flex;gap:7px; }
+    .side-actions { margin-top:13px; }
+    .side-actions button { flex:1; }
+    .info { margin-top:18px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:11px;line-height:1.65; }
+    .info strong { color:#dce8fa; }
+    .footer { color:#667895;text-align:center;font-size:11px;margin-top:25px; }
+    .toast { position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:11px 16px;border:1px solid var(--line);background:#1a2942;color:#eef6ff;border-radius:12px;box-shadow:var(--shadow);font-size:12px;transition:.22s;z-index:5;max-width:calc(100vw - 24px);text-align:center; }
+    .toast.show { opacity:1;transform:translate(-50%,0); }
+    .kbd { border:1px solid var(--line);background:#10192a;border-radius:5px;padding:2px 5px;color:#9eb1d1;font-size:10px; }
+    @media(max-width:800px) { .layout{grid-template-columns:1fr}.hero{margin-top:30px}.history{max-height:250px} }
+    @media(max-width:480px) { body{padding:18px 12px 35px}.topbar{margin-bottom:12px}.local-pill{font-size:10px}.actions{grid-template-columns:1fr}.main-panel,.side-panel{padding:18px} }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after{scroll-behavior:auto!important;transition:none!important} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">➤</div><div>USERNAME LAB<small>Telegram link utility</small></div></div>
+      <div class="local-pill">● Работает локально в браузере</div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Генератор username</div>
+      <h1>Найди свой <span class="gradient">Telegram ник</span></h1>
+      <p>Создавай варианты username, копируй их и открывай Telegram для ручной проверки профиля.</p>
+    </section>
+
+    <main class="layout">
+      <section class="panel main-panel">
+        <div class="section-head"><div><h2>Рабочая область</h2><div class="sub" style="margin-top:5px">Генерация и переход к Telegram</div></div><span class="kbd">Enter ↵</span></div>
+        <div class="field-label"><label for="username">Текущий username</label><span id="lengthLabel">0 символов</span></div>
+        <div class="username-wrap">
+          <span class="at">@</span>
+          <input id="username" type="text" maxlength="33" autocomplete="off" spellcheck="false" placeholder="например, cool_user" aria-label="Telegram username">
+          <button class="icon-btn" id="copyBtn" type="button" title="Скопировать ник" aria-label="Скопировать ник">▢</button>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="generateBtn" type="button">✦ Сгенерировать</button>
+          <button class="btn secondary" id="nextBtn" type="button">↻ Следующий вариант</button>
+        </div>
+        <button class="btn check-btn" id="checkBtn" type="button">↗ Проверить в Telegram</button>
+
+        <div class="result-box" aria-live="polite">
+          <div class="result-title"><span class="dot" id="statusDot"></span><span id="statusTitle">Ожидание действия</span></div>
+          <p class="result-detail" id="statusDetail">Сгенерируй username или введи свой. Кнопка проверки откроет ссылку t.me в новой вкладке.</p>
+          <a class="result-link" id="resultLink" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+        </div>
+
+        <div style="margin-top:25px">
+          <div class="section-head"><div><h2>Настройки генерации</h2><div class="sub" style="margin-top:5px">Настрой формат будущего ника</div></div></div>
+          <div class="settings-grid">
+            <div class="control"><label for="minLength">Минимальная длина</label><select id="minLength"></select></div>
+            <div class="control"><label for="maxLength">Максимальная длина</label><select id="maxLength"></select></div>
+            <div class="control"><label for="style">Стиль ника</label>
+              <select id="style">
+                <option value="mixed">Буквы + цифры</option>
+                <option value="letters">Только буквы</option>
+                <option value="underscore">С подчёркиванием</option>
+                <option value="digits">Буквы и цифры, больше цифр</option>
+              </select>
+            </div>
+            <div class="control"><label for="prefix">Начало ника (необязательно)</label><input class="text-control" id="prefix" maxlength="12" placeholder="например, art"></div>
+          </div>
+          <label class="checkline"><input type="checkbox" id="autoOpen"> Открывать Telegram сразу после генерации</label>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="side-title"><div><h2>История</h2><div class="sub" style="margin-top:5px">Недавно созданные варианты</div></div><span class="counter" id="historyCount">0 / 30</span></div>
+        <div class="history" id="history"><div class="history-empty">Здесь появятся сгенерированные username.</div></div>
+        <div class="side-actions"><button class="mini" id="exportBtn" type="button">Экспорт .txt</button><button class="mini" id="clearBtn" type="button">Очистить</button></div>
+        <div class="info">
+          <strong>Как работает проверка?</strong><br>
+          Кнопка открывает <strong>https://t.me/username</strong>. Сайт не определяет занятость автоматически: результат нужно посмотреть в Telegram вручную.
+          <br><br>
+          <strong>Формат:</strong> от 5 до 32 символов, латинские буквы, цифры и подчёркивания. Генератор начинает ник с буквы. Окончательное решение о допустимости и доступности принимает Telegram.
+        </div>
+      </aside>
+    </main>
+    <footer class="footer">USERNAME LAB · Не связан с Telegram · Генерация выполняется на вашем устройстве</footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const input = $("username");
+  const historyItems = [];
+  const MAX_HISTORY = 30;
+  let toastTimer = null;
+
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+
+  // Заполняем оба списка всеми значениями 5–32: настройки никогда не могут
+  // присвоить select значение, которого нет среди его option.
+  function fillLengthSelect(select, selected) {
+    for (let n = 5; n <= 32; n++) {
+      const option = document.createElement("option");
+      option.value = String(n);
+      option.textContent = `${n} ${n === 2 || n === 3 || n === 4 ? "символа" : "символов"}`;
+      option.selected = n === selected;
+      select.append(option);
+    }
+  }
+  fillLengthSelect($("minLength"), 7);
+  fillLengthSelect($("maxLength"), 12);
+
+  function randomInt(max) {
+    if (!Number.isInteger(max) || max <= 0) throw new RangeError("max должен быть положительным целым числом");
+    if (window.crypto && window.crypto.getRandomValues) {
+      const range = 0x100000000;
+      const limit = range - (range % max);
+      const buffer = new Uint32Array(1);
+      let value;
+      do {
+        window.crypto.getRandomValues(buffer);
+        value = buffer[0];
+      } while (value >= limit);
+      return value % max;
+    }
+    return Math.floor(Math.random() * max);
+  }
+
+  function pick(chars) {
+    return chars[randomInt(chars.length)];
+  }
+
+  function cleanPrefix(value) {
+    return value.toLowerCase().replace(/[^a-z0-9_]/g, "").replace(/^_+|_+$/g, "");
+  }
+
+  function makeUsername() {
+    const min = Number($("minLength").value);
+    const max = Number($("maxLength").value);
+    const length = min + randomInt(max - min + 1);
+    const style = $("style").value;
+    const prefix = cleanPrefix($("prefix").value).slice(0, Math.min(12, length - 1));
+    const pool = style === "letters" ? letters :
+      style === "digits" ? letters + digits.repeat(3) :
+      letters + digits;
+
+    // Username начинается с буквы — это самый совместимый формат для Telegram.
+    let result = prefix;
+    if (!result) result = pick(letters);
+
+    while (result.length < length) {
+      if (style === "underscore" && result.length > 1 && result.length < length - 1 &&
+          !result.endsWith("_") && randomInt(8) === 0) {
+        result += "_";
+      } else {
+        result += pick(pool);
+      }
+    }
+
+    result = result.replace(/_+/g, "_").replace(/_+$/g, "");
+    if (!/^[a-z]/.test(result)) result = pick(letters) + result.slice(1);
+    return result.slice(0, 32);
+  }
+
+  function isValid(name) {
+    return /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(name);
+  }
+
+  function currentName() {
+    return input.value.trim().replace(/^@+/, "");
+  }
+
+  function showToast(message) {
+    $("toast").textContent = message;
+    $("toast").classList.add("show");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => $("toast").classList.remove("show"), 2300);
+  }
+
+  function updateLength() {
+    $("lengthLabel").textContent = `${currentName().length} символов`;
+  }
+
+  function setStatus(title, detail, color, link) {
+    $("statusTitle").textContent = title;
+    $("statusDetail").textContent = detail;
+    $("statusDot").style.background = color || "var(--yellow)";
+    $("statusDot").style.color = color || "var(--yellow)";
+    const anchor = $("resultLink");
+    if (link) {
+      anchor.href = link;
+      anchor.textContent = link;
+      anchor.hidden = false;
+    } else {
+      anchor.hidden = true;
+      anchor.removeAttribute("href");
+    }
+  }
+
+  function renderHistory() {
+    const root = $("history");
+    $("historyCount").textContent = `${historyItems.length} / ${MAX_HISTORY}`;
+    if (!historyItems.length) {
+      root.innerHTML = '<div class="history-empty">История пока пуста. Сгенерируй первый username.</div>';
+      return;
+    }
+    root.replaceChildren();
+    historyItems.forEach((name) => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      const label = document.createElement("span");
+      label.className = "history-name";
+      label.textContent = "@" + name;
+      const tag = document.createElement("span");
+      tag.className = "history-tag";
+      tag.textContent = "t.me";
+      const actions = document.createElement("div");
+      actions.className = "history-actions";
+      const copy = document.createElement("button");
+      copy.className = "mini";
+      copy.type = "button";
+      copy.textContent = "Копия";
+      copy.addEventListener("click", () => copyText(name));
+      const open = document.createElement("button");
+      open.className = "mini";
+      open.type = "button";
+      open.textContent = "↗";
+      open.title = "Открыть ссылку Telegram";
+      open.addEventListener("click", () => openTelegram(name));
+      actions.append(copy, open);
+      row.append(label, tag, actions);
+      root.append(row);
+    });
+  }
+
+  function addHistory(name) {
+    const existing = historyItems.indexOf(name);
+    if (existing !== -1) historyItems.splice(existing, 1);
+    historyItems.unshift(name);
+    if (historyItems.length > MAX_HISTORY) historyItems.length = MAX_HISTORY;
+    renderHistory();
+  }
+
+  function openTelegram(name) {
+    if (!isValid(name)) {
+      setStatus("Некорректный username", "Нужно 5–32 символа: первая — латинская буква, далее латинские буквы, цифры или подчёркивание.", "var(--red)");
+      return;
+    }
+    const url = `https://t.me/${encodeURIComponent(name)}`;
+
+    // Вызов window.open происходит непосредственно из пользовательского действия.
+    // С noopener браузер может вернуть null даже при успешном открытии, поэтому
+    // по возвращаемому значению нельзя надёжно определять блокировку вкладки.
+    const newWindow = window.open(url, "_blank");
+    if (newWindow) newWindow.opener = null;
+
+    setStatus("Ссылка для проверки", `Открыта ссылка Telegram для @${name}. Посмотри страницу вручную: сайт не может достоверно определить занятость ника.`, "var(--cyan)", url);
+    addHistory(name);
+  }
+
+  function generate() {
+    const name = makeUsername();
+    input.value = name;
+    updateLength();
+    addHistory(name);
+    const link = `https://t.me/${encodeURIComponent(name)}`;
+    setStatus("Username сгенерирован", "Это случайный вариант, а не подтверждённо свободный ник. Нажми «Проверить в Telegram», чтобы открыть его.", "var(--green)", link);
+    if ($("autoOpen").checked) openTelegram(name);
+  }
+
+  async function copyText(value) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const temp = document.createElement("textarea");
+        temp.value = value;
+        temp.setAttribute("readonly", "");
+        temp.style.position = "fixed";
+        temp.style.left = "-9999px";
+        document.body.append(temp);
+        temp.select();
+        const ok = document.execCommand("copy");
+        temp.remove();
+        if (!ok) throw new Error("copy failed");
+      }
+      showToast("Скопировано: @" + value);
+    } catch {
+      showToast("Не удалось скопировать. Выдели username вручную.");
+    }
+  }
+
+  $("generateBtn").addEventListener("click", generate);
+  $("nextBtn").addEventListener("click", generate);
+  $("checkBtn").addEventListener("click", () => {
+    const name = currentName();
+    if (!isValid(name)) {
+      setStatus("Проверь формат", "Username: от 5 до 32 символов; первая — латинская буква, остальные — латинские буквы, цифры или _.", "var(--red)");
+      input.focus();
+      return;
+    }
+    openTelegram(name);
+  });
+  $("copyBtn").addEventListener("click", () => {
+    const name = currentName();
+    if (!name) return showToast("Сначала введи или сгенерируй username.");
+    copyText(name);
+  });
+  input.addEventListener("input", updateLength);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") $("checkBtn").click();
+  });
+
+  function normalizeLengthSettings(changed) {
+    let min = Number($("minLength").value);
+    let max = Number($("maxLength").value);
+    if (min > max) {
+      if (changed === "min") max = min;
+      else min = max;
+    }
+    $("minLength").value = String(min);
+    $("maxLength").value = String(max);
+  }
+  $("minLength").addEventListener("change", () => normalizeLengthSettings("min"));
+  $("maxLength").addEventListener("change", () => normalizeLengthSettings("max"));
+
+  $("clearBtn").addEventListener("click", () => {
+    historyItems.length = 0;
+    renderHistory();
+    showToast("История очищена.");
+  });
+
+  $("exportBtn").addEventListener("click", () => {
+    if (!historyItems.length) return showToast("История пока пуста.");
+    const contents = historyItems.map(name => `@${name} — https://t.me/${name}`).join("\n");
+    const blob = new Blob([contents], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "telegram-usernames.txt";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Файл истории подготовлен.");
+  });
+
+  renderHistory();
+  generate();
+})();
+</script>
+</body>
+</html>
